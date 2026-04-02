@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sage Insight Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sage-green: #00D639;
+  --sage-dark: #1a1a2e;
+  --sage-mid: #16213e;
+  --sage-card: #0f3460;
+  --sage-accent: #00D639;
+  --sage-warn: #ff6b35;
+  --sage-danger: #e63946;
+  --sage-text: #e0e0e0;
+  --sage-muted: #8892a4;
+  --radius: 12px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: var(--sage-dark); color: var(--sage-text); min-height: 100vh; }
+
+/* NAV */
+.nav { background: var(--sage-mid); border-bottom: 1px solid rgba(0,214,57,0.2); padding: 0 24px; display: flex; align-items: center; gap: 0; height: 56px; position: sticky; top: 0; z-index: 100; }
+.nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--sage-green); margin-right: 32px; }
+.nav-logo span { color: var(--sage-text); font-weight: 300; }
+.nav-tab { padding: 0 20px; height: 56px; display: flex; align-items: center; cursor: pointer; color: var(--sage-muted); font-size: 14px; font-weight: 500; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.nav-tab:hover { color: var(--sage-text); }
+.nav-tab.active { color: var(--sage-green); border-bottom-color: var(--sage-green); }
+
+/* LAYOUT */
+.page { display: none; padding: 24px; max-width: 1400px; margin: 0 auto; }
+.page.active { display: block; }
+
+/* CARDS */
+.card { background: var(--sage-mid); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius); padding: 20px; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+
+/* PERSONA CARD */
+.persona-card { background: var(--sage-mid); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius); padding: 20px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+.persona-card:hover { border-color: var(--sage-green); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,214,57,0.15); }
+.persona-card-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.avatar { width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0; }
+.persona-name { font-weight: 600; font-size: 16px; }
+.persona-role { font-size: 12px; color: var(--sage-muted); margin-top: 2px; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-high { background: rgba(230,57,70,0.2); color: #e63946; border: 1px solid rgba(230,57,70,0.3); }
+.badge-moderate { background: rgba(255,107,53,0.2); color: #ff6b35; border: 1px solid rgba(255,107,53,0.3); }
+.badge-low { background: rgba(0,214,57,0.15); color: var(--sage-green); border: 1px solid rgba(0,214,57,0.3); }
+.nps-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.nps-score { font-size: 28px; font-weight: 700; }
+.nps-score.high { color: var(--sage-green); }
+.nps-score.mid { color: #ff6b35; }
+.nps-score.low { color: #e63946; }
+.pain-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 4px 10px; font-size: 11px; color: var(--sage-muted); }
+.quote { font-style: italic; color: var(--sage-muted); font-size: 13px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); line-height: 1.5; }
+
+/* SLIDE OUT */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+.overlay.active { opacity: 1; pointer-events: all; }
+.slideout { position: fixed; right: -600px; top: 0; bottom: 0; width: 580px; background: var(--sage-mid); border-left: 1px solid rgba(0,214,57,0.2); z-index: 201; transition: right 0.3s; overflow-y: auto; padding: 32px; }
+.slideout.active { right: 0; }
+.slideout-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--sage-muted); font-size: 24px; cursor: pointer; }
+.slideout-close:hover { color: var(--sage-text); }
+.ocean-bars { margin: 20px 0; }
+.ocean-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.ocean-label { width: 120px; font-size: 12px; color: var(--sage-muted); flex-shrink: 0; }
+.ocean-track { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+.ocean-fill { height: 100%; background: var(--sage-green); border-radius: 3px; transition: width 0.8s; }
+.ocean-val { width: 30px; font-size: 12px; color: var(--sage-muted); text-align: right; }
+.tech-stack { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.tech-tag { background: rgba(0,214,57,0.1); color: var(--sage-green); border: 1px solid rgba(0,214,57,0.2); border-radius: 6px; padding: 4px 10px; font-size: 12px; }
+.slideout-actions { display: flex; gap: 12px; margin-top: 24px; }
+.btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
+.btn-primary { background: var(--sage-green); color: #000; }
+.btn-primary:hover { background: #00b830; }
+.btn-secondary { background: rgba(255,255,255,0.08); color: var(--sage-text); border: 1px solid rgba(255,255,255,0.1); }
+.btn-secondary:hover { background: rgba(255,255,255,0.12); }
+
+/* CONVERSATION */
+.conv-layout { display: grid; grid-template-columns: 260px 1fr; gap: 20px; height: calc(100vh - 120px); }
+.conv-sidebar { background: var(--sage-mid); border-radius: var(--radius); border: 1px solid rgba(255,255,255,0.08); overflow-y: auto; }
+.conv-main { display: flex; flex-direction: column; background: var(--sage-mid); border-radius: var(--radius); border: 1px solid rgba(255,255,255,0.08); }
+.sidebar-item { padding: 14px 16px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s; display: flex; align-items: center; gap: 10px; }
+.sidebar-item:hover { background: rgba(255,255,255,0.04); }
+.sidebar-item.active { background: rgba(0,214,57,0.08); border-left: 3px solid var(--sage-green); }
+.sidebar-item-name { font-size: 13px; font-weight: 500; }
+.sidebar-item-type { font-size: 11px; color: var(--sage-muted); }
+.conv-header { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 16px; }
+.topic-tabs { display: flex; gap: 6px; padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); flex-wrap: wrap; }
+.topic-tab { padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; background: rgba(255,255,255,0.06); color: var(--sage-muted); border: 1px solid transparent; transition: all 0.15s; }
+.topic-tab:hover { background: rgba(255,255,255,0.1); color: var(--sage-text); }
+.topic-tab.active { background: rgba(0,214,57,0.15); color: var(--sage-green); border-color: rgba(0,214,57,0.3); }
+.quick-qs { display: flex; gap: 8px; padding: 10px 20px; flex-wrap: wrap; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.quick-q { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 6px 12px; font-size: 12px; cursor: pointer; color: var(--sage-muted); transition: all 0.15s; }
+.quick-q:hover { background: rgba(0,214,57,0.08); border-color: rgba(0,214,57,0.2); color: var(--sage-text); }
+.messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.msg { max-width: 80%; }
+.msg-user { align-self: flex-end; }
+.msg-persona { align-self: flex-start; }
+.msg-bubble { padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.6; }
+.msg-user .msg-bubble { background: rgba(0,214,57,0.15); border: 1px solid rgba(0,214,57,0.2); }
+.msg-persona .msg-bubble { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); }
+.msg-meta { font-size: 11px; color: var(--sage-muted); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+.sentiment-tag { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+.s-positive { background: rgba(0,214,57,0.15); color: var(--sage-green); }
+.s-neutral { background: rgba(255,255,255,0.08); color: var(--sage-muted); }
+.s-concerned { background: rgba(255,107,53,0.15); color: #ff6b35; }
+.s-critical { background: rgba(230,57,70,0.15); color: #e63946; }
+.conv-input-area { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; gap: 10px; }
+.conv-input { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 14px; color: var(--sage-text); font-size: 14px; outline: none; font-family: inherit; }
+.conv-input:focus { border-color: rgba(0,214,57,0.4); }
+.send-btn { background: var(--sage-green); border: none; color: #000; border-radius: 8px; padding: 10px 20px; font-weight: 600; cursor: pointer; font-size: 14px; }
+.send-btn:hover { background: #00b830; }
+.summary-card { background: rgba(0,214,57,0.05); border: 1px solid rgba(0,214,57,0.15); border-radius: 10px; padding: 16px; margin: 12px 0; }
+.summary-title { font-size: 13px; font-weight: 600; color: var(--sage-green); margin-bottom: 10px; }
+.summary-item { font-size: 12px; color: var(--sage-muted); padding: 4px 0; display: flex; gap: 8px; }
+.summary-label { font-weight: 600; color: var(--sage-text); min-width: 80px; }
+
+/* PROPOSITION */
+.prop-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.prop-input-area { display: flex; flex-direction: column; gap: 16px; }
+.prop-textarea { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 14px; color: var(--sage-text); font-size: 14px; font-family: inherit; resize: vertical; min-height: 120px; outline: none; }
+.prop-textarea:focus { border-color: rgba(0,214,57,0.4); }
+.persona-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ps-item { padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); cursor: pointer; font-size: 12px; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
+.ps-item:hover { border-color: rgba(0,214,57,0.3); }
+.ps-item.selected { background: rgba(0,214,57,0.1); border-color: var(--sage-green); color: var(--sage-green); }
+.ps-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sage-muted); flex-shrink: 0; }
+.ps-item.selected .ps-dot { background: var(--sage-green); }
+.results-area { display: flex; flex-direction: column; gap: 16px; }
+.radar-container { background: var(--sage-mid); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius); padding: 20px; display: flex; justify-content: center; }
+.reaction-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 16px; }
+.reaction-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.score-bars { display: flex; flex-direction: column; gap: 6px; }
+.score-bar-row { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.score-bar-label { width: 140px; color: var(--sage-muted); flex-shrink: 0; }
+.score-bar-track { flex: 1; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s; }
+.score-bar-val { width: 30px; text-align: right; font-weight: 600; }
+.synthesis { background: rgba(0,214,57,0.04); border: 1px solid rgba(0,214,57,0.1); border-radius: 10px; padding: 16px; }
+.synthesis-section { margin-bottom: 14px; }
+.synthesis-label { font-size: 12px; font-weight: 600; color: var(--sage-green); margin-bottom: 6px; }
+.synthesis-text { font-size: 13px; color: var(--sage-muted); line-height: 1.6; }
+.improvement-card { background: rgba(255,107,53,0.05); border: 1px solid rgba(255,107,53,0.15); border-radius: 8px; padding: 12px; margin-top: 8px; }
+.improvement-title { font-size: 12px; font-weight: 600; color: #ff6b35; margin-bottom: 4px; }
+.improvement-text { font-size: 12px; color: var(--sage-muted); line-height: 1.5; }
+
+/* INTELLIGENCE */
+.intel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.intel-stat { background: var(--sage-mid); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius); padding: 20px; }
+.intel-stat-num { font-size: 36px; font-weight: 700; color: var(--sage-green); }
+.intel-stat-label { font-size: 13px; color: var(--sage-muted); margin-top: 4px; }
+.intel-stat-sub { font-size: 12px; color: var(--sage-muted); margin-top: 8px; }
+.churn-item { display: flex; gap: 14px; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.churn-rank { width: 28px; height: 28px; border-radius: 50%; background: rgba(230,57,70,0.15); color: #e63946; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.churn-content { flex: 1; }
+.churn-signal { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.churn-quote { font-size: 12px; font-style: italic; color: var(--sage-muted); }
+.churn-tags { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+.comp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.comp-table th { text-align: left; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); color: var(--sage-muted); font-weight: 500; }
+.comp-table td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.comp-table tr:hover td { background: rgba(255,255,255,0.02); }
+.check { color: var(--sage-green); }
+.cross { color: #e63946; }
+.partial { color: #ff6b35; }
+.nps-product { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.nps-product-name { width: 200px; font-size: 13px; }
+.nps-bar-track { flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+.nps-bar-fill { height: 100%; background: var(--sage-green); border-radius: 4px; }
+.nps-product-score { width: 40px; text-align: right; font-weight: 600; color: var(--sage-green); font-size: 13px; }
+
+h2 { font-size: 20px; font-weight: 600; margin-bottom: 16px; }
+h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--sage-text); }
+.section-label { font-size: 12px; font-weight: 600; color: var(--sage-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+.filter-bar { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
+.filter-btn { padding: 6px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: var(--sage-muted); cursor: pointer; font-size: 13px; transition: all 0.15s; }
+.filter-btn:hover { border-color: rgba(0,214,57,0.3); color: var(--sage-text); }
+.filter-btn.active { background: rgba(0,214,57,0.1); border-color: var(--sage-green); color: var(--sage-green); }
+.mt-16 { margin-top: 16px; }
+.mb-16 { margin-bottom: 16px; }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--sage-muted); }
+.empty-icon { font-size: 48px; margin-bottom: 16px; }
+.copy-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--sage-text); border-radius: 6px; padding: 6px 14px; font-size: 12px; cursor: pointer; float: right; }
+.copy-btn:hover { background: rgba(255,255,255,0.1); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">Sage <span>Insight Lab</span></div>
+  <div class="nav-tab active" onclick="showPage('personas')">Persona Studio</div>
+  <div class="nav-tab" onclick="showPage('conversation')">Conversation Mode</div>
+  <div class="nav-tab" onclick="showPage('proposition')">Proposition Analyser</div>
+  <div class="nav-tab" onclick="showPage('intelligence')">Intelligence</div>
+</nav>
+
+<!-- PERSONAS PAGE -->
+<div id="page-personas" class="page active">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <h2>Persona Studio</h2>
+    <div class="filter-bar" style="margin:0;">
+      <button class="filter-btn active" onclick="filterPersonas('all',this)">All</button>
+      <button class="filter-btn" onclick="filterPersonas('business',this)">Business Owners</button>
+      <button class="filter-btn" onclick="filterPersonas('accountant',this)">Accountants</button>
+      <button class="filter-btn" onclick="filterPersonas('HIGH',this)">High Risk</button>
+    </div>
+  </div>
+  <div class="card-grid" id="persona-grid"></div>
+</div>
+
+<!-- CONVERSATION PAGE -->
+<div id="page-conversation" class="page">
+  <div class="conv-layout">
+    <div class="conv-sidebar">
+      <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:12px;font-weight:600;color:var(--sage-muted);text-transform:uppercase;letter-spacing:0.05em;">Select Persona</div>
+      <div id="conv-persona-list"></div>
+    </div>
+    <div class="conv-main">
+      <div class="conv-header" id="conv-header">
+        <div style="color:var(--sage-muted);font-size:14px;">← Select a persona to begin</div>
+      </div>
+      <div class="topic-tabs" id="topic-tabs"></div>
+      <div class="quick-qs" id="quick-qs"></div>
+      <div class="messages" id="messages">
+        <div class="empty-state"><div class="empty-icon">💬</div><div>Select a persona and start the conversation</div></div>
+      </div>
+      <div class="conv-input-area">
+        <input class="conv-input" id="conv-input" placeholder="Ask a question..." onkeydown="if(event.key==='Enter')sendMessage()">
+        <button class="send-btn" onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROPOSITION PAGE -->
+<div id="page-proposition" class="page">
+  <h2>Proposition Analyser</h2>
+  <div class="prop-layout">
+    <div class="prop-input-area">
+      <div class="card">
+        <div class="section-label mb-16">Proposition or Message</div>
+        <textarea class="prop-textarea" id="prop-text" placeholder="Paste a product description, feature announcement, or messaging statement here..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button class="btn btn-secondary" style="font-size:12px;" onclick="loadPreset('mtd')">MTD Tool</button>
+          <button class="btn btn-secondary" style="font-size:12px;" onclick="loadPreset('bank')">Bank Feed</button>
+          <button class="btn btn-secondary" style="font-size:12px;" onclick="loadPreset('practice')">Practice Intelligence</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-label mb-16">Select Personas to Evaluate (2+)</div>
+        <div class="persona-selector" id="prop-persona-selector"></div>
+      </div>
+      <button class="btn btn-primary" onclick="runAnalysis()" style="width:100%;">Run Analysis</button>
+    </div>
+    <div class="results-area" id="prop-results">
+      <div class="empty-state"><div class="empty-icon">📊</div><div>Enter a proposition and select personas to see analysis</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- INTELLIGENCE PAGE -->
+<div id="page-intelligence" class="page">
+  <h2>Intelligence Base</h2>
+  <div class="intel-grid">
+    <div class="intel-stat"><div class="intel-stat-num">+49</div><div class="intel-stat-label">Overall NPS (13 products)</div><div class="intel-stat-sub">Based on 3,900 verbatims across UK SME segment</div></div>
+    <div class="intel-stat"><div class="intel-stat-num">5.6M</div><div class="intel-stat-label">UK SMEs (FSB 2024)</div><div class="intel-stat-sub">Primary addressable market for Sage</div></div>
+    <div class="intel-stat"><div class="intel-stat-num">67%</div><div class="intel-stat-label">Use an accountant (ICAEW)</div><div class="intel-stat-sub">Key channel opportunity for Sage for Accountants</div></div>
+    <div class="intel-stat"><div class="intel-stat-num">84%</div><div class="intel-stat-label">MTD compliance rate (HMRC)</div><div class="intel-stat-sub">Remaining 16% = urgent conversion opportunity</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+    <div class="card">
+      <h3>NPS by Product</h3>
+      <div id="nps-products"></div>
+    </div>
+    <div class="card">
+      <h3>Top Churn Signals</h3>
+      <div id="churn-signals"></div>
+    </div>
+  </div>
+
+  <div class="card mb-16">
+    <h3>Competitive Landscape</h3>
+    <table class="comp-table">
+      <thead><tr><th>Feature</th><th>Sage</th><th>Xero</th><th>QuickBooks</th><th>FreeAgent</th></tr></thead>
+      <tbody>
+        <tr><td>MTD Compliant</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+        <tr><td>Bank Feed Reliability</td><td class="partial">~</td><td class="check">✓</td><td class="check">✓</td><td class="partial">~</td></tr>
+        <tr><td>Accountant Portal</td><td class="check">✓</td><td class="check">✓</td><td class="partial">~</td><td class="cross">✗</td></tr>
+        <tr><td>AI Forecasting</td><td class="partial">~</td><td class="partial">~</td><td class="check">✓</td><td class="cross">✗</td></tr>
+        <tr><td>Inventory Management</td><td class="check">✓</td><td class="partial">~</td><td class="check">✓</td><td class="cross">✗</td></tr>
+        <tr><td>Payroll Integration</td><td class="check">✓</td><td class="partial">~</td><td class="partial">~</td><td class="partial">~</td></tr>
+        <tr><td>Mobile App Quality</td><td class="partial">~</td><td class="check">✓</td><td class="check">✓</td><td class="partial">~</td></tr>
+        <tr><td>Price Competitiveness</td><td class="cross">✗</td><td class="partial">~</td><td class="partial">~</td><td class="check">✓</td></tr>
+        <tr><td>Support Quality</td><td class="partial">~</td><td class="check">✓</td><td class="partial">~</td><td class="check">✓</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:12px;font-size:12px;color:var(--sage-muted);">✓ Strong &nbsp;~ Partial / Mixed &nbsp;✗ Weak</div>
+  </div>
+
+  <div class="card">
+    <h3>OCEAN Model Reference</h3>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:4px;">
+      <div><div style="font-weight:600;color:var(--sage-green);font-size:13px;">Openness</div><div style="font-size:12px;color:var(--sage-muted);margin-top:4px;">Creativity, curiosity, willingness to try new tools</div></div>
+      <div><div style="font-weight:600;color:var(--sage-green);font-size:13px;">Conscientiousness</div><div style="font-size:12px;color:var(--sage-muted);margin-top:4px;">Organisation, reliability, detail-orientation</div></div>
+      <div><div style="font-weight:600;color:var(--sage-green);font-size:13px;">Extraversion</div><div style="font-size:12px;color:var(--sage-muted);margin-top:4px;">Social energy, assertiveness, verbal processing</div></div>
+      <div><div style="font-weight:600;color:var(--sage-green);font-size:13px;">Agreeableness</div><div style="font-size:12px;color:var(--sage-muted);margin-top:4px;">Cooperation, trust, conflict avoidance</div></div>
+      <div><div style="font-weight:600;color:var(--sage-green);font-size:13px;">Neuroticism</div><div style="font-size:12px;color:var(--sage-muted);margin-top:4px;">Emotional sensitivity, stress response, anxiety</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE OUT PANEL -->
+<div class="overlay" id="overlay" onclick="closeSlideout()"></div>
+<div class="slideout" id="slideout">
+  <button class="slideout-close" onclick="closeSlideout()">✕</button>
+  <div id="slideout-content"></div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const personas = [
+  {
+    id:'priya', name:'Priya Sharma', type:'business', role:'Founder, Priya's Patisserie (12 staff)',
+    nps:4, risk:'HIGH', npsClass:'low',
+    ocean:{O:72,C:58,E:80,A:65,N:74},
+    oceanRationale:{
+      O:'High openness — happy to try new tools if they solve real problems',
+      C:'Moderate conscientiousness — focused but reactive; bookkeeping slips when busy',
+      E:'High extraversion — very vocal about frustrations and wins',
+      A:'Moderate agreeableness — collaborative but pushes back on poor service',
+      N:'High neuroticism — cash flow stress amplifies frustration with software bugs'
+    },
+    pains:['Cash flow gaps','VAT complexity','Bank feed errors','Mobile limitations'],
+    quote:'"I spend more time fixing Sage errors than running my business. Xero just works."',
+    tech:['Sage Accounting','Barclays Open Banking','Square POS','Deliveroo'],
+    trigger:'One more bank feed failure and I\'m gone',
+    responses:{
+      general:{ text:"Running the patisserie keeps me incredibly busy. My biggest frustration honestly is that I spend time troubleshooting software instead of growing the business.", sentiment:'concerned' },
+      pricing:{ text:"I pay a lot for Sage and I'm not sure I'm getting value. Xero looks cheaper and my accountant uses it. Why should I stay?", sentiment:'critical' },
+      switching:{ text:"I've been looking at Xero seriously. My accountant recommended it and the bank feed issues I keep having are pushing me over the edge.", sentiment:'critical' },
+      mtd:{ text:"MTD was a nightmare. The submission kept failing and I had to call support three times. Sorted eventually but lost half a day.", sentiment:'concerned' },
+      ai:{ text:"If AI could flag when my cash is going to run out before it happens, I'd actually use it. I don't trust forecasts that aren't based on real data though.", sentiment:'neutral' },
+      cashflow:{ text:"Cash flow is my number one worry. I've got 12 staff to pay and seasonal revenue. When the bank feed is wrong, I'm flying blind.", sentiment:'critical' },
+      competitors:{ text:"Xero looks cleaner on mobile and my accountant says it's much easier for them to collaborate. That's a big deal for me.", sentiment:'critical' },
+      onboarding:{ text:"Onboarding was okay but I wish there'd been more handholding specifically for food businesses. The setup took longer than expected.", sentiment:'concerned' },
+      features:{ text:"The invoicing is fine. It's the reliability I need — if the core stuff just worked consistently I'd be a lot happier.", sentiment:'neutral' },
+      newfeature:{ text:"If it genuinely saves me time and doesn't require me to learn something complex, yes. If it's another feature I'll never use, no.", sentiment:'neutral' }
+    }
+  },
+  {
+    id:'sarah', name:'Sarah Mitchell', type:'business', role:'Director, Mitchell & Sons Plumbing (8 staff)',
+    nps:7, risk:'MODERATE', npsClass:'mid',
+    ocean:{O:45,C:78,E:55,A:72,N:48},
+    oceanRationale:{
+      O:'Below average openness — prefers proven tools, wary of change',
+      C:'High conscientiousness — very organised, values accuracy above all',
+      E:'Average extraversion — thoughtful communicator, not impulsive',
+      A:'High agreeableness — loyal customer but avoids confrontation',
+      N:'Low neuroticism — stable, measured, doesn\'t panic easily'
+    },
+    pains:['Job costing accuracy','Payroll complexity','CIS returns','Report clarity'],
+    quote:'"Sage does what I need but I feel like I\'m only using 30% of what I pay for."',
+    tech:['Sage 50','Sage Payroll','HSBC Business','Checkatrade'],
+    trigger:'Better value proposition or accountant recommends switch',
+    responses:{
+      general:{ text:"We've used Sage for years and it's reliable. I just wish I understood it better — I feel like there's loads I'm not using.", sentiment:'neutral' },
+      pricing:{ text:"The price has gone up twice in two years. I understand costs rise but I'd like to feel like I'm getting more in return.", sentiment:'concerned' },
+      switching:{ text:"I wouldn't switch lightly — the migration would be a project. But if my accountant said there was a better option I'd listen.", sentiment:'neutral' },
+      mtd:{ text:"MTD was a worry but Sage handled it fine. The submissions go through without issues. That's what I need.", sentiment:'positive' },
+      ai:{ text:"I'd use AI for job costing and cash flow projections. If it could tell me which jobs are actually profitable that would be brilliant.", sentiment:'positive' },
+      cashflow:{ text:"Cash flow is manageable — we invoice promptly and chase debts. It's the CIS returns that take most of my admin time.", sentiment:'neutral' },
+      competitors:{ text:"I've seen Xero demos. Looks easier but I don't know if it handles CIS the way we need. I wouldn't risk it without checking.", sentiment:'neutral' },
+      onboarding:{ text:"We've been on Sage so long I can't really remember onboarding. The accountant helps when we need to do something new.", sentiment:'neutral' },
+      features:{ text:"I mainly use invoicing, payroll and reports. Probably missing a trick somewhere but haven't had time to explore.", sentiment:'neutral' },
+      newfeature:{ text:"Show me what it does in plain English and what it saves me. I'll try it if the benefit is clear.", sentiment:'neutral' }
+    }
+  },
+  {
+    id:'james', name:'James Okafor', type:'business', role:'MD, Okafor Legal Consulting (4 staff)',
+    nps:6, risk:'LOW', npsClass:'mid',
+    ocean:{O:68,C:82,E:62,A:58,N:35},
+    oceanRationale:{
+      O:'Above average openness — evaluates new tools methodically',
+      C:'Very high conscientiousness — processes and accuracy are paramount',
+      E:'Moderate extraversion — confident in business conversations',
+      A:'Moderate agreeableness — professional, not easily swayed',
+      N:'Low neuroticism — composed, analytical decision maker'
+    },
+    pains:['Time tracking integration','Client billing accuracy','GDPR data handling','Reporting depth'],
+    quote:'"I need software that matches the precision my clients expect from us."',
+    tech:['Sage Accounting','Clio','Microsoft 365','Barclays'],
+    trigger:'Data security concern or integration failure',
+    responses:{
+      general:{ text:"Sage meets our core needs. As a legal firm, accuracy and audit trails are non-negotiable. So far it's delivered on that.", sentiment:'positive' },
+      pricing:{ text:"The cost is acceptable given the compliance features. I'd need strong evidence before switching to something cheaper.", sentiment:'neutral' },
+      switching:{ text:"We're not looking to switch. The risk of a data migration error in our line of work outweighs any potential benefit.", sentiment:'positive' },
+      mtd:{ text:"MTD compliance is critical for us. Sage handled it competently and I felt confident in the submissions.", sentiment:'positive' },
+      ai:{ text:"AI in financial software needs to be explainable. I need to understand why it's flagging something before I act on it.", sentiment:'neutral' },
+      cashflow:{ text:"Cash flow is healthy. Retainer billing helps. The integration with our case management system is where we lose time.", sentiment:'neutral' },
+      competitors:{ text:"I've not seriously evaluated competitors. The switching cost and compliance risk isn't worth it at this stage.", sentiment:'positive' },
+      onboarding:{ text:"Onboarding was thorough. We took time to configure it correctly for legal billing requirements. Worth the investment.", sentiment:'positive' },
+      features:{ text:"Time tracking integration with our case management platform is the main gap. Everything else functions as needed.", sentiment:'neutral' },
+      newfeature:{ text:"If it passes our compliance review and integrates cleanly, we'd evaluate it. We don't adopt features casually.", sentiment:'neutral' }
+    }
+  },
+  {
+    id:'dave', name:'Dave Thornton', type:'business', role:'Owner, Thornton Logistics (22 staff)',
+    nps:5, risk:'LOW', npsClass:'mid',
+    ocean:{O:38,C:70,E:72,A:60,N:55},
+    oceanRationale:{
+      O:'Low openness — pragmatic, prefers familiar systems',
+      C:'High conscientiousness — operational discipline, needs reliability',
+      E:'High extraversion — direct, tells it like it is',
+      A:'Moderate agreeableness — fair but expects fairness in return',
+      N:'Moderate neuroticism — stressed by operational disruption'
+    },
+    pains:['Fleet cost tracking','Multi-vehicle expense management','Sage Mobile on the road','Support wait times'],
+    quote:'"It does the job but the mobile app is rubbish and support takes forever."',
+    tech:['Sage Accounting','Sage Mobile','Lloyds Business','Samsara Fleet'],
+    trigger:'Mobile experience improvement from a competitor',
+    responses:{
+      general:{ text:"Look, it does what I need but it's not pretty. The mobile app is the main problem — I'm in the truck or on sites half the time.", sentiment:'concerned' },
+      pricing:{ text:"I think it's overpriced for what the mobile experience delivers. If I'm paying premium I want a premium product.", sentiment:'concerned' },
+      switching:{ text:"I'd probably stay unless something dramatically better came along. Migrating 22 staff is a headache I don't need.", sentiment:'neutral' },
+      mtd:{ text:"MTD works. No complaints there. It's the day-to-day mobile stuff that winds me up.", sentiment:'neutral' },
+      ai:{ text:"If AI could summarise my fleet costs automatically and flag overspend by vehicle I'd use that every day.", sentiment:'positive' },
+      cashflow:{ text:"Cash flow is lumpy — big clients pay late. I need better visibility on what's coming in when.", sentiment:'concerned' },
+      competitors:{ text:"Haven't looked seriously. My accountant handles the bookkeeping side and he's on Sage too so it works for now.", sentiment:'neutral' },
+      onboarding:{ text:"Muddle through as usual. Could have done with more industry-specific setup guidance.", sentiment:'concerned' },
+      features:{ text:"Fleet cost tracking needs to be better. I'm doing half of it in spreadsheets which defeats the point.", sentiment:'concerned' },
+      newfeature:{ text:"If it works on mobile properly and doesn't require training I'll use it. Simple as that.", sentiment:'neutral' }
+    }
+  },
+  {
+    id:'tom_e', name:'Tom Ellis', type:'business', role:'Founder, Ellis Creative Studio (3 staff)',
+    nps:4, risk:'HIGH', npsClass:'low',
+    ocean:{O:90,C:42,E:78,A:68,N:62},
+    oceanRationale:{
+      O:'Very high openness — loves new tools, early adopter mindset',
+      C:'Low conscientiousness — creative, hates admin, disorganised with finances',
+      E:'High extraversion — enthusiastic, shares opinions freely',
+      A:'Moderate agreeableness — collaborative, client-focused',
+      N:'Moderate-high neuroticism — cashflow anxiety, feast-and-famine stress'
+    },
+    pains:['Invoice chasing','Project-based billing','Stripe integration','Complexity for small team'],
+    quote:'"Sage feels like it was built for a 1990s accountant, not a creative agency in 2024."',
+    tech:['Sage Accounting','Stripe','Notion','Adobe CC','Monzo Business'],
+    trigger:'Any fintech competitor with better UI',
+    responses:{
+      general:{ text:"Honestly? Sage feels ancient. I only use it because my accountant says I have to. There must be something better.", sentiment:'critical' },
+      pricing:{ text:"I'm paying Sage prices for FreeAgent functionality. The UI alone makes me want to leave.", sentiment:'critical' },
+      switching:{ text:"I'm actively looking. Xero or even just FreshBooks. Anything that integrates with Stripe properly.", sentiment:'critical' },
+      mtd:{ text:"MTD nearly broke me. The submission process is not designed for non-accountants.", sentiment:'critical' },
+      ai:{ text:"AI that wrote my invoices, chased them automatically and synced with Stripe? I'd pay double for that.", sentiment:'positive' },
+      cashflow:{ text:"Cash flow is my nemesis. Projects finish and clients take 60 days to pay while I'm paying freelancers weekly.", sentiment:'critical' },
+      competitors:{ text:"Xero looks beautiful. FreshBooks integrates with everything I use. Sage looks like it's from 2008.", sentiment:'critical' },
+      onboarding:{ text:"Onboarding was overwhelming. Too many options I'll never use. Should start simpler.", sentiment:'critical' },
+      features:{ text:"The only features I use are invoicing and the P&L. The rest is noise.", sentiment:'concerned' },
+      newfeature:{ text:"Show me a good demo. I'll tell you in 30 seconds if it's actually useful or just more clutter.", sentiment:'neutral' }
+    }
+  },
+  {
+    id:'claire', name:'Claire Donaldson', type:'business', role:'CEO, Donaldson Care Group (45 staff)',
+    nps:8, risk:'LOW', npsClass:'high',
+    ocean:{O:55,C:85,E:60,A:70,N:30},
+    oceanRationale:{
+      O:'Moderate openness — evaluates carefully, adopts when proven',
+      C:'Very high conscientiousness — processes, compliance, documentation',
+      E:'Moderate extraversion — measured, considered communication style',
+      A:'High agreeableness — collaborative leader, values relationships',
+      N:'Low neuroticism — calm under pressure, manages complexity well'
+    },
+    pains:['Multi-site payroll complexity','CQC compliance reporting','Staff scheduling integration','Audit readiness'],
+    quote:'"Sage handles our complexity better than anything I\'ve seen. The payroll alone saves us 20 hours a month."',
+    tech:['Sage 50','Sage HR','Sage Payroll','Workforce management','NatWest'],
+    trigger:'Major price increase or loss of dedicated support',
+    responses:{
+      general:{ text:"Sage is embedded across our whole operation. Payroll, HR, accounting — it all works together and that integration is invaluable.", sentiment:'positive' },
+      pricing:{ text:"We're on an enterprise arrangement so pricing is fair for what we get. I'd resist a significant increase though.", sentiment:'neutral' },
+      switching:{ text:"Switching would be a 12-month project. Not something we'd do unless Sage fundamentally failed us.", sentiment:'positive' },
+      mtd:{ text:"MTD was well managed. Our accountants worked with Sage directly and it was seamless for us.", sentiment:'positive' },
+      ai:{ text:"AI-powered rota optimisation linked to payroll would transform us. That's where I see real ROI.", sentiment:'positive' },
+      cashflow:{ text:"We manage cash flow carefully with monthly reviews. Sage's reporting gives us what we need.", sentiment:'positive' },
+      competitors:{ text:"We evaluated the market two years ago. Nothing matched Sage for our complexity. That may have changed but I'm not rushing to look.", sentiment:'positive' },
+      onboarding:{ text:"Our implementation took six months. Done properly with a Sage partner. Worth every penny.", sentiment:'positive' },
+      features:{ text:"We use Sage extensively. If anything, we'd like more CQC-specific reporting templates.", sentiment:'neutral' },
+      newfeature:{ text:"We'd evaluate it properly as part of our annual review. Run it past our IT and compliance leads first.", sentiment:'neutral' }
+    }
+  },
+  {
+    id:'tom_w', name:'Tom Westbrook', type:'accountant', role:'Partner, Westbrook & Associates (solo + 2)',
+    nps:7, risk:'MODERATE', npsClass:'mid',
+    ocean:{O:60,C:80,E:55,A:65,N:45},
+    oceanRationale:{
+      O:'Above average openness — evaluates new practice tools annually',
+      C:'High conscientiousness — deadline-driven, process-oriented',
+      E:'Moderate extraversion — confident with clients, less with tech',
+      A:'Moderate agreeableness — client service focus, measured',
+      N:'Moderate neuroticism — filing season stress, deadline anxiety'
+    },
+    pains:['Client adoption of software','Practice efficiency','MTD for all clients','Pricing margin'],
+    quote:'"I need my clients on the same platform as me. Sage for Accountants is good but client-side onboarding support could be better."',
+    tech:['Sage for Accountants','Sage Accounting (client)','HMRC MTD','CCH'],
+    trigger:'Xero offering better practice management tools',
+    responses:{
+      general:{ text:"Running a practice is all about efficiency. Sage for Accountants helps but I spend too much time chasing clients to update their records.", sentiment:'neutral' },
+      pricing:{ text:"The practice pricing works for me at my scale. Worried about how it scales if I grow the team.", sentiment:'neutral' },
+      switching:{ text:"I'd consider Xero if their practice tools improved. Several of my peers have switched and seem happy.", sentiment:'concerned' },
+      mtd:{ text:"MTD is now just part of the job. Sage handles it fine. The issue is getting older clients to engage with it properly.", sentiment:'neutral' },
+      ai:{ text:"AI that could draft client correspondence or flag anomalies in client data before I review would save hours each week.", sentiment:'positive' },
+      cashflow:{ text:"Cash flow management for my clients is a regular conversation. Better built-in tools would help me add value.", sentiment:'neutral' },
+      competitors:{ text:"Xero is strong for practices. The ecosystem and integrations are ahead. I use Sage because my larger clients are on it.", sentiment:'concerned' },
+      onboarding:{ text:"New client onboarding is where I lose most time. A smoother Sage client setup process would be a real differentiator.", sentiment:'concerned' },
+      features:{ text:"The client-facing dashboard needs work. I want clients to be able to see and understand their position without calling me.", sentiment:'concerned' },
+      newfeature:{ text:"If it reduces time spent on admin and helps clients self-serve more, I'm interested. Show me the numbers.", sentiment:'neutral' }
+    }
+  },
+  {
+    id:'rachel', name:'Rachel Obi', type:'accountant', role:'Senior Manager, BDO (30-person team)',
+    nps:8, risk:'LOW', npsClass:'high',
+    ocean:{O:65,C:88,E:58,A:70,N:35},
+    oceanRationale:{
+      O:'Above average openness — champions tech adoption within her team',
+      C:'Very high conscientiousness — audit-ready, meticulous',
+      E:'Moderate extraversion — strong internal communicator',
+      A:'High agreeableness — mentors junior staff, collaborative',
+      N:'Low neuroticism — thrives under deadline pressure'
+    },
+    pains:['Client data quality','Multi-entity consolidation','Training junior staff','Regulatory change pace'],
+    quote:'"Sage at enterprise scale does what we need. I want better consolidation reporting and faster access to client data."',
+    tech:['Sage for Accountants','Sage 200','Sage Payroll','Excel','Power BI'],
+    trigger:'Consolidation reporting gap filled by competitor',
+    responses:{
+      general:{ text:"At BDO we need tools that work reliably at scale. Sage delivers on the fundamentals. Our gaps are around advanced consolidation.", sentiment:'neutral' },
+      pricing:{ text:"Enterprise pricing is negotiated centrally. My concern is value at the features level — not the headline cost.", sentiment:'neutral' },
+      switching:{ text:"Not a decision I'd make. It would need board-level approval and a compelling business case. Not on my agenda.", sentiment:'positive' },
+      mtd:{ text:"MTD compliance is managed centrally. Sage is fully integrated with our submission workflow. No issues.", sentiment:'positive' },
+      ai:{ text:"AI that identifies anomalies across a client portfolio before partner review would be transformative. That's the use case I want.", sentiment:'positive' },
+      cashflow:{ text:"Cash flow analysis is part of our advisory offering. The tools are adequate but we supplement with Excel and Power BI.", sentiment:'neutral' },
+      competitors:{ text:"We monitor the market. Sage's enterprise capability is strong. The analytics layer is where others are pulling ahead.", sentiment:'neutral' },
+      onboarding:{ text:"We have a dedicated implementation team. Onboarding is managed. Training junior staff on Sage features is the ongoing challenge.", sentiment:'neutral' },
+      features:{ text:"Multi-entity consolidation is the priority. And better Power BI connectors so we don't have to export to Excel.", sentiment:'concerned' },
+      newfeature:{ text:"We'd pilot it with a small client group, measure impact, then decide on broader rollout. We take a structured approach.", sentiment:'neutral' }
+    }
+  },
+  {
+    id:'colin', name:'Colin Mabunda', type:'accountant', role:'Owner, Mabunda Accounting (freelance + 3)',
+    nps:9, risk:'LOW', npsClass:'high',
+    ocean:{O:58,C:82,E:68,A:78,N:28},
+    oceanRationale:{
+      O:'Moderate openness — adopts tools that solve client problems',
+      C:'High conscientiousness — meticulous, deadline-focused',
+      E:'High extraversion — strong client relationships, referral-driven',
+      A:'High agreeableness — client-first culture, very loyal',
+      N:'Low neuroticism — calm, steady, emotionally resilient'
+    },
+    pains:['Time tracking across clients','Proposal management','Client communication tools','Growing the team'],
+    quote:'"Sage plus GoProposal has transformed my practice. I\'d recommend it to any small accountant."',
+    tech:['Sage for Accountants','GoProposal','Sage Accounting (clients)','Dext','WhatsApp Business'],
+    trigger:'Unlikely to switch — deeply embedded',
+    responses:{
+      general:{ text:"I'm a true Sage advocate. The combination of Sage Accounting and GoProposal changed how I run my practice completely.", sentiment:'positive' },
+      pricing:{ text:"The value is absolutely there. GoProposal paid for itself in the first month through better proposal conversion.", sentiment:'positive' },
+      switching:{ text:"I wouldn't switch. I'm invested in the ecosystem and my clients are on it. Why would I start over?", sentiment:'positive' },
+      mtd:{ text:"MTD is seamless with Sage. I handle 40+ clients through MTD season and I've had zero submission issues this year.", sentiment:'positive' },
+      ai:{ text:"I'd love AI to handle first-draft client emails and flag when a client's VAT position looks unusual. That would save me an hour a day.", sentiment:'positive' },
+      cashflow:{ text:"I help all my clients with cash flow planning. The Sage tools are good but I supplement with my own Excel models.", sentiment:'positive' },
+      competitors:{ text:"I get asked about Xero a lot. Honestly, for small practices Sage with GoProposal is a stronger package once you know it.", sentiment:'positive' },
+      onboarding:{ text:"I onboard clients to Sage myself and it's smooth now. Took time to build my process but it's systematic.", sentiment:'positive' },
+      features:{ text:"GoProposal integration is the standout. If Sage could build more into the proposal and engagement letter workflow it would be perfect.", sentiment:'positive' },
+      newfeature:{ text:"If it helps me serve clients better or saves me time, I'll be one of the first to try it. Happy to be a beta tester.", sentiment:'positive' }
+    }
+  },
+  {
+    id:'nia', name:'Nia Okonkwo', type:'accountant', role:'Director, Okonkwo Tax Advisory (solo)',
+    nps:7, risk:'MODERATE', npsClass:'mid',
+    ocean:{O:70,C:75,E:65,A:62,N:50},
+    oceanRationale:{
+      O:'Above average openness — actively evaluates specialist tools',
+      C:'High conscientiousness — particularly around tax deadlines',
+      E:'Moderate extraversion — strong networker at tax events',
+      A:'Moderate agreeableness — advises clients bluntly and honestly',
+      N:'Moderate neuroticism — self-employed stress, revenue variability'
+    },
+    pains:['Capital gains complexity','Trust accounting','R&D claims workflow','Software cost at solo scale'],
+    quote:'"Sage is almost right for a specialist tax practice. The gap is depth in complex tax scenarios."',
+    tech:['Sage for Accountants','CCH OneClick','HMRC','BTC Software'],
+    trigger:'CCH or Iris offering better tax specialisation',
+    responses:{
+      general:{ text:"As a tax specialist I need depth, not breadth. Sage covers the compliance basics well but I need more for complex advisory work.", sentiment:'neutral' },
+      pricing:{ text:"At my scale the cost is noticeable. I scrutinise every subscription. The value has to be crystal clear.", sentiment:'concerned' },
+      switching:{ text:"I'd look at CCH or Iris if Sage doesn't improve its tax depth. They're built for specialists.", sentiment:'concerned' },
+      mtd:{ text:"MTD is handled. The issue is Making Tax Digital for Income Tax — that's where I need more Sage support for my clients.", sentiment:'neutral' },
+      ai:{ text:"AI that assists with R&D claim preparation or spots capital gains optimisation opportunities — that's the kind of AI I'd pay for.", sentiment:'positive' },
+      cashflow:{ text:"My own cash flow is erratic — big bills in January and July. The tools are fine but I manage it manually.", sentiment:'neutral' },
+      competitors:{ text:"CCH OneClick is stronger for complex tax. I use it alongside Sage. Ideally I'd have one system that does both.", sentiment:'concerned' },
+      onboarding:{ text:"Setup was fine. The tax-specific configuration took some work but manageable.", sentiment:'neutral' },
+      features:{ text:"R&D claims, trust accounting, CGT calculations — these need to be much stronger. Currently I work around Sage for these.", sentiment:'concerned' },
+      newfeature:{ text:"Tax advisory specific features get my attention. General features, not so much. Be specific about what it does for tax specialists.", sentiment:'neutral' }
+    }
+  },
+  {
+    id:'maya', name:'Maya Chen', type:'accountant', role:'Manager, Chen & Partners (8-person firm)',
+    nps:3, risk:'HIGH', npsClass:'low',
+    ocean:{O:78,C:72,E:62,A:55,N:58},
+    oceanRationale:{
+      O:'High openness — actively trialling alternatives',
+      C:'High conscientiousness — frustrated when tools impede accuracy',
+      E:'Moderate extraversion — direct and candid feedback giver',
+      A:'Moderate agreeableness — professional but won\'t compromise on quality',
+      N:'Moderate neuroticism — anxiety about firm efficiency and client satisfaction'
+    },
+    pains:['Migration complexity','Client disruption during switch','Xero integration with apps','Staff retraining'],
+    quote:'"We\'ve made the decision. We\'re migrating to Xero. The practice management tools are just better."',
+    tech:['Sage for Accountants','Xero (trialling)','Receipt Bank','Karbon'],
+    trigger:'Already migrating — retention focus only',
+    responses:{
+      general:{ text:"We've been on Sage for seven years but we've made the decision to move. The Xero practice management tools are ahead and our clients are requesting it.", sentiment:'critical' },
+      pricing:{ text:"Price wasn't the driver. It's capability. Xero's practice dashboard and client communication tools are just better for how we work.", sentiment:'critical' },
+      switching:{ text:"We're in the process. Migration is complex but we're committed. The Xero partner team has been very supportive.", sentiment:'critical' },
+      mtd:{ text:"Both platforms handle MTD fine. That wasn't the differentiator.", sentiment:'neutral' },
+      ai:{ text:"Xero's AI features in the new roadmap look promising. That also influenced our decision.", sentiment:'concerned' },
+      cashflow:{ text:"Not a concern for us specifically. It's about practice efficiency and client experience.", sentiment:'neutral' },
+      competitors:{ text:"We evaluated Xero, QuickBooks and Sage side by side. Xero won on practice management and app ecosystem.", sentiment:'critical' },
+      onboarding:{ text:"Xero's migration support is good. They assigned us a dedicated partner manager.", sentiment:'concerned' },
+      features:{ text:"The Karbon integration with Xero is the killer feature for us. Sage doesn't have an equivalent.", sentiment:'critical' },
+      newfeature:{ text:"Unless Sage is announcing something that changes our analysis, our decision is made.", sentiment:'critical' }
+    }
+  },
+  {
+    id:'david_k', name:'David Kwame', type:'accountant', role:'Senior Associate, KPMG Midlands',
+    nps:7, risk:'MODERATE', npsClass:'mid',
+    ocean:{O:62,C:85,E:55,A:68,N:38},
+    oceanRationale:{
+      O:'Above average openness — interested in emerging accounting tech',
+      C:'Very high conscientiousness — Big 4 standards, meticulous',
+      E:'Moderate extraversion — professional, measured',
+      A:'High agreeableness — client service orientation',
+      N:'Low-moderate neuroticism — composed but performance-aware'
+    },
+    pains:['Sage-to-internal system integration','Data export quality','Audit trail depth','ESG reporting gaps'],
+    quote:'"At KPMG scale we need Sage to integrate cleanly with our internal platforms. The data quality out of Sage is good but connectors need work."',
+    tech:['Sage 200','Sage Intacct','KPMG internal platforms','Alteryx','Tableau'],
+    trigger:'Integration failure or competitor with better API',
+    responses:{
+      general:{ text:"From a Big 4 perspective Sage works at the client level. Integration with our analytics platforms is where we see friction.", sentiment:'neutral' },
+      pricing:{ text:"Pricing decisions are above my level. My input is on feature capability and integration quality.", sentiment:'neutral' },
+      switching:{ text:"Not a conversation I'm part of. Our tooling decisions go through procurement and technology leadership.", sentiment:'neutral' },
+      mtd:{ text:"MTD compliance is well handled. No issues at client level.", sentiment:'positive' },
+      ai:{ text:"AI that improves data extraction quality or helps identify audit risks would be directly useful in my work.", sentiment:'positive' },
+      cashflow:{ text:"We work on cash flow analysis for clients. Sage's reporting is adequate but we layer Alteryx on top for depth.", sentiment:'neutral' },
+      competitors:{ text:"Oracle and SAP are the enterprise alternatives at the firms we audit. Sage holds its own at mid-market.", sentiment:'neutral' },
+      onboarding:{ text:"Client onboarding is managed by the client. We assess their Sage setup as part of audit preparation.", sentiment:'neutral' },
+      features:{ text:"API quality and data export fidelity are my priorities. ESG reporting modules are also increasingly relevant for our clients.", sentiment:'concerned' },
+      newfeature:{ text:"I'd flag it to our technology team for evaluation if it's relevant to our client engagements.", sentiment:'neutral' }
+    }
+  }
+];
+
+const topics = [
+  { id:'general', label:'General' },
+  { id:'pricing', label:'Pricing & Value' },
+  { id:'switching', label:'Switching Intent' },
+  { id:'mtd', label:'MTD & Tax' },
+  { id:'ai', label:'AI Features' },
+  { id:'cashflow', label:'Cash Flow' },
+  { id:'competitors', label:'vs Competitors' },
+  { id:'onboarding', label:'Onboarding' },
+  { id:'features', label:'Features' },
+  { id:'newfeature', label:'New Feature Reaction' }
+];
+
+const quickQuestions = {
+  general: ['How is your business going?', 'What does a typical week look like?', 'What\'s your biggest challenge right now?', 'How long have you used Sage?', 'Would you recommend Sage?'],
+  pricing: ['Is Sage good value?', 'Has the price increased recently?', 'How does cost compare to alternatives?', 'What would justify a price increase?', 'Are there features you pay for but don\'t use?'],
+  switching: ['Are you considering switching?', 'What would make you switch?', 'Have you tried alternatives?', 'What would make you stay?', 'Has your accountant recommended anything?'],
+  mtd: ['How has MTD affected you?', 'Were submissions straightforward?', 'Any MTD compliance issues?', 'How prepared are your clients for MTD?', 'What support did you need?'],
+  ai: ['Would you use AI features?', 'What AI would save you most time?', 'Do you trust AI for financial decisions?', 'What AI features have you seen from competitors?', 'What would AI need to do to change your workflow?'],
+  cashflow: ['How do you manage cash flow?', 'What\'s your biggest cash flow pain?', 'Do you use Sage for forecasting?', 'How often do you check your position?', 'What would improve your cash flow visibility?'],
+  competitors: ['Have you looked at Xero?', 'What do you think of QuickBooks?', 'How does Sage compare to alternatives?', 'What are competitors doing better?', 'What\'s your accountant\'s preferred platform?'],
+  onboarding: ['How was your initial setup?', 'What support did you get?', 'How long did it take to get up to speed?', 'What would have made onboarding better?', 'How do you onboard clients to Sage?'],
+  features: ['Which features do you use most?', 'What features are you missing?', 'Are there features you never use?', 'What integration is most important to you?', 'What feature would most improve your day?'],
+  newfeature: ['Would you try new AI features?', 'What would make you adopt a new feature?', 'Do you beta test new tools?', 'What\'s the most useful recent addition?', 'What feature would make you upgrade?']
+};
+
+const propositionPresets = {
+  mtd: 'Sage MTD Submission Tool — built-in Making Tax Digital compliance that lets you submit VAT returns directly to HMRC in seconds, with automatic error checking and a full audit trail. Available on desktop and mobile.',
+  bank: 'Bank Feed Reliability Guarantee — Sage now guarantees 99.9% bank feed uptime with automatic reconnection and real-time alerts if a connection drops. No more manual imports.',
+  practice: 'Practice Intelligence Dashboard — a unified view of all your clients\' financial health, flagging cashflow risks, overdue returns and upsell opportunities before they become problems.'
+};
+
+const dimensions = ['Clarity','Workflow Fit','vs Competitors','Messaging Alignment','Market Relevance','Pain Relief','Adoption Likelihood','Retention Impact'];
+
+// ============================================================
+// STATE
+// ============================================================
+let currentPersona = null;
+let currentTopic = 'general';
+let messages = [];
+let selectedPropositionPersonas = [];
+let personaFilter = 'all';
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ============================================================
+// PERSONAS
+// ============================================================
+function generateAvatar(persona) {
+  const colors = { business: '#00D639', accountant: '#0066FF' };
+  const color = colors[persona.type] || '#888';
+  const initials = persona.name.split(' ').map(n=>n[0]).join('').slice(0,2);
+  return `<svg class="avatar" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="28" cy="28" r="28" fill="${color}22"/>
+    <circle cx="28" cy="22" r="10" fill="${color}55"/>
+    <ellipse cx="28" cy="42" rx="14" ry="10" fill="${color}44"/>
+    <text x="28" y="27" text-anchor="middle" dominant-baseline="middle" fill="${color}" font-size="12" font-weight="700" font-family="Inter,sans-serif">${initials}</text>
+  </svg>`;
+}
+
+function renderPersonas() {
+  const grid = document.getElementById('persona-grid');
+  const filtered = personas.filter(p => {
+    if (personaFilter === 'all') return true;
+    if (personaFilter === 'HIGH') return p.risk === 'HIGH';
+    return p.type === personaFilter;
+  });
+  grid.innerHTML = filtered.map(p => `
+    <div class="persona-card" onclick="openSlideout('${p.id}')">
+      <div class="persona-card-header">
+        ${generateAvatar(p)}
+        <div>
+          <div class="persona-name">${p.name}</div>
+          <div class="persona-role">${p.role}</div>
+          <div style="margin-top:6px;"><span class="badge badge-${p.risk.toLowerCase()}">${p.risk} RISK</span></div>
+        </div>
+      </div>
+      <div class="nps-row">
+        <div>
+          <div style="font-size:11px;color:var(--sage-muted);margin-bottom:2px;">NPS Score</div>
+          <div class="nps-score ${p.npsClass}">${p.nps}</div>
+        </div>
+        <div style="text-align:right;font-size:12px;color:var(--sage-muted);">${p.type === 'business' ? '🏢 Business' : '📊 Accountant'}</div>
+      </div>
+      <div class="pain-chips">${p.pains.map(pain=>`<span class="chip">${pain}</span>`).join('')}</div>
+      <div class="quote">${p.quote}</div>
+    </div>
+  `).join('');
+}
+
+function filterPersonas(filter, btn) {
+  personaFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPersonas();
+}
+
+function openSlideout(personaId) {
+  const p = personas.find(x => x.id === personaId);
+  if (!p) return;
+  const content = document.getElementById('slideout-content');
+  content.innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+      ${generateAvatar(p)}
+      <div>
+        <div style="font-size:20px;font-weight:700;">${p.name}</div>
+        <div style="color:var(--sage-muted);font-size:13px;margin-top:2px;">${p.role}</div>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+          <span class="badge badge-${p.risk.toLowerCase()}">${p.risk} RISK</span>
+          <span style="font-size:13px;color:var(--sage-muted);">NPS: <strong style="color:${p.npsClass==='high'?'var(--sage-green)':p.npsClass==='mid'?'#ff6b35':'#e63946'}">${p.nps}</strong></span>
+        </div>
+      </div>
+    </div>
+    <div class="section-label">OCEAN Psychological Profile</div>
+    <div class="ocean-bars">
+      ${Object.entries(p.ocean).map(([k,v]) => `
+        <div class="ocean-bar">
+          <div class="ocean-label">${{O:'Openness',C:'Conscientiousness',E:'Extraversion',A:'Agreeableness',N:'Neuroticism'}[k]}</div>
+          <div class="ocean-track"><div class="ocean-fill" style="width:${v}%"></div></div>
+          <div class="ocean-val">${v}</div>
+        </div>
+        <div style="font-size:11px;color:var(--sage-muted);margin:-6px 0 10px 132px;line-height:1.4;">${p.oceanRationale[k]}</div>
+      `).join('')}
+    </div>
+    <div class="section-label" style="margin-top:16px;">Pain Points</div>
+    <div class="pain-chips" style="margin-bottom:16px;">${p.pains.map(pain=>`<span class="chip">${pain}</span>`).join('')}</div>
+    <div class="section-label">Tech Stack</div>
+    <div class="tech-stack" style="margin-bottom:16px;">${p.tech.map(t=>`<span class="tech-tag">${t}</span>`).join('')}</div>
+    <div class="section-label">Switching Trigger</div>
+    <div style="font-size:13px;color:var(--sage-muted);margin-bottom:16px;line-height:1.5;">${p.trigger}</div>
+    <div class="section-label">Signature Quote</div>
+    <div style="font-style:italic;color:var(--sage-muted);font-size:13px;line-height:1.6;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border-left:3px solid var(--sage-green);">${p.quote}</div>
+    <div class="slideout-actions">
+      <button class="btn btn-primary" onclick="startConversation('${p.id}')">Start Conversation</button>
+      <button class="btn btn-secondary" onclick="addToAnalysis('${p.id}')">Add to Analysis</button>
+    </div>
+  `;
+  document.getElementById('overlay').classList.add('active');
+  document.getElementById('slideout').classList.add('active');
+}
+
+function closeSlideout() {
+  document.getElementById('overlay').classList.remove('active');
+  document.getElementById('slideout').classList.remove('active');
+}
+
+function startConversation(personaId) {
+  closeSlideout();
+  showPageDirect('conversation');
+  selectConversationPersona(personaId);
+}
+
+function addToAnalysis(personaId) {
+  closeSlideout();
+  showPageDirect('proposition');
+  if (!selectedPropositionPersonas.includes(personaId)) {
+    selectedPropositionPersonas.push(personaId);
+    renderPropositionPersonaSelector();
+  }
+}
+
+function showPageDirect(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const tabs = { personas: 0, conversation: 1, proposition: 2, intelligence: 3 };
+  const navTabs = document.querySelectorAll('.nav-tab');
+  if (navTabs[tabs[page]]) navTabs[tabs[page]].classList.add('active');
+}
+
+// ============================================================
+// CONVERSATION
+// ============================================================
+function renderConversationSidebar() {
+  const list = document.getElementById('conv-persona-list');
+  list.innerHTML = personas.map(p => `
+    <div class="sidebar-item ${currentPersona && currentPersona.id === p.id ? 'active' : ''}" onclick="selectConversationPersona('${p.id}')">
+      ${generateAvatar(p)}
+      <div>
+        <div class="sidebar-item-name">${p.name}</div>
+        <div class="sidebar-item-type">${p.type === 'business' ? 'Business' : 'Accountant'} · NPS ${p.nps}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectConversationPersona(personaId) {
+  currentPersona = personas.find(p => p.id === personaId);
+  messages = [];
+  currentTopic = 'general';
+  renderConversationSidebar();
+  renderConvHeader();
+  renderTopicTabs();
+  renderQuickQs();
+  renderMessages();
+}
+
+function renderConvHeader() {
+  const header = document.getElementById('conv-header');
+  if (!currentPersona) { header.innerHTML = '<div style="color:var(--sage-muted);font-size:14px;">← Select a persona to begin</div>'; return; }
+  header.innerHTML = `
+    ${generateAvatar(currentPersona)}
+    <div>
+      <div style="font-weight:600;">${currentPersona.name}</div>
+      <div style="font-size:12px;color:var(--sage-muted);">${currentPersona.role}</div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+      <span class="badge badge-${currentPersona.risk.toLowerCase()}">${currentPersona.risk}</span>
+      <span style="font-size:13px;color:var(--sage-muted);">NPS <strong>${currentPersona.nps}</strong></span>
+    </div>
+  `;
+}
+
+function renderTopicTabs() {
+  const tabs = document.getElementById('topic-tabs');
+  if (!currentPersona) { tabs.innerHTML = ''; return; }
+  tabs.innerHTML = topics.map(t => `
+    <div class="topic-tab ${t.id === currentTopic ? 'active' : ''}" onclick="selectTopic('${t.id}')">${t.label}</div>
+  `).join('');
+}
+
+function selectTopic(topicId) {
+  currentTopic = topicId;
+  renderTopicTabs();
+  renderQuickQs();
+}
+
+function renderQuickQs() {
+  const qs = document.getElementById('quick-qs');
+  if (!currentPersona) { qs.innerHTML = ''; return; }
+  const questions = quickQuestions[currentTopic] || [];
+  qs.innerHTML = questions.map(q => `
+    <div class="quick-q" onclick="askQuestion('${q.replace(/'/g,"\\'")}')">Q: ${q}</div>
+  `).join('');
+}
+
+function askQuestion(q) {
+  document.getElementById('conv-input').value = q;
+  sendMessage();
+}
+
+function sendMessage() {
+  if (!currentPersona) return;
+  const input = document.getElementById('conv-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  messages.push({ role: 'user', text });
+
+  // Intent matching
+  const response = getResponse(text);
+  messages.push({ role: 'persona', text: response.text, sentiment: response.sentiment });
+
+  renderMessages();
+}
+
+function getResponse(question) {
+  if (!currentPersona) return { text: 'Please select a persona first.', sentiment: 'neutral' };
+  const q = question.toLowerCase();
+
+  // Intent classification
+  const intents = [
+    { keys: ['switch','xero','moving','migration','alternative','competitor','leave','quit','going to'], topic: 'switching' },
+    { keys: ['price','cost','expensive','value','pay','subscription','money','afford'], topic: 'pricing' },
+    { keys: ['mtd','making tax','vat','hmrc','submission','compliance','tax return'], topic: 'mtd' },
+    { keys: ['ai','artificial','machine','auto','forecast','predict','intelligenc'], topic: 'ai' },
+    { keys: ['cash','flow','payment','invoice','late','credit','liquidity'], topic: 'cashflow' },
+    { keys: ['xero','quickbooks','freeagent','freshbooks','competitor','rival','compared'], topic: 'competitors' },
+    { keys: ['onboard','setup','start','implement','begin','training'], topic: 'onboarding' },
+    { keys: ['feature','function','tool','module','integration','connect'], topic: 'features' },
+    { keys: ['new feature','trial','beta','launch','release','announc'], topic: 'newfeature' },
+    { keys: ['frustrat','annoy','hate','dislike','problem','issue','bug','broken','fail'], topic: 'general' }
+  ];
+
+  let matchedTopic = currentTopic;
+  for (const intent of intents) {
+    if (intent.keys.some(k => q.includes(k))) {
+      matchedTopic = intent.topic;
+      break;
+    }
+  }
+
+  const response = currentPersona.responses[matchedTopic] || currentPersona.responses['general'];
+  return response;
+}
+
+function renderMessages() {
+  const container = document.getElementById('messages');
+  if (messages.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><div>Select a persona and start the conversation</div></div>';
+    return;
+  }
+
+  const sentimentMap = { positive: 's-positive', neutral: 's-neutral', concerned: 's-concerned', critical: 's-critical' };
+
+  let html = messages.map(msg => {
+    if (msg.role === 'user') {
+      return `<div class="msg msg-user"><div class="msg-bubble">${msg.text}</div><div class="msg-meta" style="justify-content:flex-end;">You</div></div>`;
+    } else {
+      return `<div class="msg msg-persona"><div class="msg-bubble">${msg.text}</div><div class="msg-meta">${currentPersona.name} <span class="sentiment-tag ${sentimentMap[msg.sentiment] || 's-neutral'}">${msg.sentiment}</span></div></div>`;
+    }
+  }).join('');
+
+  // Session summary after 3+ persona responses
+  const personaMessages = messages.filter(m => m.role === 'persona');
+  if (personaMessages.length >= 3) {
+    const sentiments = personaMessages.map(m => m.sentiment);
+    const hasCritical = sentiments.includes('critical');
+    const hasConcerned = sentiments.includes('concerned');
+    const hasPositive = sentiments.includes('positive');
+
+    html += `<div class="summary-card">
+      <div class="summary-title">📋 Session Summary</div>
+      ${hasCritical ? '<div class="summary-item"><span class="summary-label">RISK</span> High churn risk signals detected in responses</div>' : ''}
+      ${hasConcerned ? '<div class="summary-item"><span class="summary-label">BARRIER</span> Concerns raised about current product gaps</div>' : ''}
+      ${hasPositive ? '<div class="summary-item"><span class="summary-label">SIGNAL</span> Positive sentiment towards specific features</div>' : ''}
+      <div class="summary-item"><span class="summary-label">PAIN</span> ${currentPersona.pains[0]} identified as primary pain point</div>
+      <div class="summary-item"><span class="summary-label">OPPORTUNITY</span> ${currentPersona.trigger}</div>
+    </div>`;
+  }
+
+  container.innerHTML = html;
+  container.scrollTop = container.scrollHeight;
+}
+
+// ============================================================
+// PROPOSITION ANALYSER
+// ============================================================
+function renderPropositionPersonaSelector() {
+  const selector = document.getElementById('prop-persona-selector');
+  selector.innerHTML = personas.map(p => `
+    <div class="ps-item ${selectedPropositionPersonas.includes(p.id) ? 'selected' : ''}" onclick="togglePropositionPersona('${p.id}')">
+      <div class="ps-dot"></div>
+      <span>${p.name.split(' ')[0]}</span>
+    </div>
+  `).join('');
+}
+
+function togglePropositionPersona(personaId) {
+  if (selectedPropositionPersonas.includes(personaId)) {
+    selectedPropositionPersonas = selectedPropositionPersonas.filter(id => id !== personaId);
+  } else {
+    selectedPropositionPersonas.push(personaId);
+  }
+  renderPropositionPersonaSelector();
+}
+
+function loadPreset(key) {
+  document.getElementById('prop-text').value = propositionPresets[key] || '';
+}
+
+function getPersonaScores(persona, prop) {
+  const propLower = prop.toLowerCase();
+  const baseScores = {
+    'Clarity': 65, 'Workflow Fit': 60, 'vs Competitors': 55,
+    'Messaging Alignment': 65, 'Market Relevance': 70, 'Pain Relief': 65,
+    'Adoption Likelihood': 60, 'Retention Impact': 65
+  };
+
+  // Adjust based on persona
+  const adj = {};
+  if (persona.risk === 'HIGH') { adj['Retention Impact'] = -10; adj['Adoption Likelihood'] = -5; }
+  if (persona.risk === 'LOW') { adj['Retention Impact'] = +10; adj['Adoption Likelihood'] = +8; }
+  if (persona.type === 'accountant') { adj['Market Relevance'] = +5; }
+
+  // Adjust based on proposition keywords
+  if (propLower.includes('mtd') || propLower.includes('tax')) { adj['Market Relevance'] = (adj['Market Relevance']||0) + 10; }
+  if (propLower.includes('cash flow') || propLower.includes('cashflow')) { adj['Pain Relief'] = (adj['Pain Relief']||0) + 12; }
+  if (propLower.includes('mobile')) { adj['Adoption Likelihood'] = (adj['Adoption Likelihood']||0) + 8; }
+  if (propLower.includes('bank feed') || propLower.includes('bank')) { adj['Pain Relief'] = (adj['Pain Relief']||0) + 10; }
+  if (propLower.includes('ai') || propLower.includes('artificial')) { adj['vs Competitors'] = (adj['vs Competitors']||0) + 12; }
+
+  const scores = {};
+  dimensions.forEach(d => {
+    scores[d] = Math.min(100, Math.max(20, (baseScores[d] || 60) + (adj[d] || 0) + Math.floor(Math.random() * 16 - 8)));
+  });
+  return scores;
+}
+
+function drawRadar(scoresMap) {
+  const size = 240;
+  const cx = size/2, cy = size/2, r = 90;
+  const n = dimensions.length;
+  const colors = ['#00D639','#0066FF','#FF6B35','#E63946'];
+
+  const axes = dimensions.map((_, i) => {
+    const angle = (i / n) * 2 * Math.PI - Math.PI/2;
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+  });
+
+  let svg = `<svg viewBox="0 0 ${size} ${size}" style="width:100%;max-width:300px;">`;
+
+  // Grid circles
+  [0.25,0.5,0.75,1].forEach(scale => {
+    const pts = axes.map((_, i) => {
+      const angle = (i/n)*2*Math.PI - Math.PI/2;
+      return `${cx + r*scale*Math.cos(angle)},${cy + r*scale*Math.sin(angle)}`;
+    }).join(' ');
+    svg += `<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>`;
+  });
+
+  // Axes
+  axes.forEach((ax, i) => {
+    svg += `<line x1="${cx}" y1="${cy}" x2="${ax.x}" y2="${ax.y}" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>`;
+    const labelAngle = (i/n)*2*Math.PI - Math.PI/2;
+    const lx = cx + (r+16)*Math.cos(labelAngle);
+    const ly = cy + (r+16)*Math.sin(labelAngle);
+    svg += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,255,255,0.4)" font-size="7" font-family="Inter,sans-serif">${dimensions[i].substring(0,8)}</text>`;
+  });
+
+  // Data polygons
+  Object.entries(scoresMap).forEach(([personaId, scores], colorIdx) => {
+    const pts = dimensions.map((d, i) => {
+      const angle = (i/n)*2*Math.PI - Math.PI/2;
+      const val = (scores[d] || 60) / 100;
+      return `${cx + r*val*Math.cos(angle)},${cy + r*val*Math.sin(angle)}`;
+    }).join(' ');
+    const color = colors[colorIdx % colors.length];
+    svg += `<polygon points="${pts}" fill="${color}22" stroke="${color}" stroke-width="1.5" opacity="0.8"/>`;
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
+function runAnalysis() {
+  const prop = document.getElementById('prop-text').value.trim();
+  if (!prop) { alert('Please enter a proposition to analyse.'); return; }
+  if (selectedPropositionPersonas.length < 2) { alert('Please select at least 2 personas.'); return; }
+
+  const results = document.getElementById('prop-results');
+
+  const scoresMap = {};
+  const reactionCards = [];
+
+  selectedPropositionPersonas.forEach(pid => {
+    const persona = personas.find(p => p.id === pid);
+    if (!persona) return;
+    const scores = getPersonaScores(persona, prop);
+    scoresMap[pid] = scores;
+
+    const avg = Math.round(Object.values(scores).reduce((a,b)=>a+b,0) / Object.keys(scores).length);
+    const weakDims = Object.entries(scores).filter(([,v]) => v < 65).map(([k]) => k);
+    const strongDims = Object.entries(scores).filter(([,v]) => v >= 80).map(([k]) => k);
+
+    reactionCards.push({ persona, scores, avg, weakDims, strongDims });
+  });
+
+  const allScores = reactionCards.flatMap(r => Object.values(r.scores));
+  const overallAvg = Math.round(allScores.reduce((a,b)=>a+b,0)/allScores.length);
+
+  let html = `
+    <div class="card" style="text-align:center;">
+      <div style="font-size:13px;color:var(--sage-muted);margin-bottom:4px;">Overall Proposition Score</div>
+      <div style="font-size:48px;font-weight:700;color:${overallAvg>=75?'var(--sage-green)':overallAvg>=55?'#ff6b35':'#e63946'}">${overallAvg}</div>
+      <div style="font-size:12px;color:var(--sage-muted);">across ${reactionCards.length} personas, 8 dimensions</div>
+    </div>
+    <div class="radar-container">
+      ${drawRadar(scoresMap)}
+    </div>
+  `;
+
+  reactionCards.forEach(({ persona, scores, avg, weakDims }) => {
+    const maxScore = Math.max(...Object.values(scores));
+    html += `
+      <div class="reaction-card">
+        <div class="reaction-header">
+          ${generateAvatar(persona)}
+          <div>
+            <div style="font-weight:600;font-size:14px;">${persona.name}</div>
+            <div style="font-size:12px;color:var(--sage-muted);">${persona.role.split(',')[0]}</div>
+          </div>
+          <div style="margin-left:auto;font-size:24px;font-weight:700;color:${avg>=75?'var(--sage-green)':avg>=55?'#ff6b35':'#e63946'}">${avg}</div>
+        </div>
+        <div class="score-bars">
+          ${dimensions.map(d => {
+            const val = scores[d] || 60;
+            const color = val >= 75 ? 'var(--sage-green)' : val >= 55 ? '#ff6b35' : '#e63946';
+            return `<div class="score-bar-row">
+              <div class="score-bar-label">${d}</div>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:${val}%;background:${color}"></div></div>
+              <div class="score-bar-val" style="color:${color}">${val}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        ${weakDims.length > 0 ? weakDims.map(dim => `
+          <div class="improvement-card">
+            <div class="improvement-title">⚠ Improve: ${dim}</div>
+            <div class="improvement-text">Score below threshold (65). Consider strengthening the messaging around ${dim.toLowerCase()} for ${persona.name}'s persona profile.</div>
+          </div>
+        `).join('') : ''}
+      </div>
+    `;
+  });
+
+  // Synthesis
+  const avgScore = overallAvg;
+  const allWeak = reactionCards.flatMap(r => r.weakDims);
+  const weakFreq = {};
+  allWeak.forEach(d => weakFreq[d] = (weakFreq[d]||0) + 1);
+  const topWeak = Object.entries(weakFreq).sort((a,b)=>b[1]-a[1]).map(([k])=>k).slice(0,2);
+
+  html += `
+    <div class="synthesis">
+      <button class="copy-btn" onclick="copyReport()">Copy Report</button>
+      <h3 style="margin-bottom:16px;">Synthesis Report</h3>
+      <div class="synthesis-section">
+        <div class="synthesis-label">✓ POSITIVES</div>
+        <div class="synthesis-text">Proposition scores ${avgScore >= 65 ? 'above' : 'below'} threshold overall. ${reactionCards.filter(r=>r.avg>=70).map(r=>r.persona.name.split(' ')[0]).join(', ')} ${reactionCards.filter(r=>r.avg>=70).length > 0 ? 'show strong receptivity' : 'have low receptivity'}.</div>
+      </div>
+      <div class="synthesis-section">
+        <div class="synthesis-label">⚠ CONCERNS</div>
+        <div class="synthesis-text">${topWeak.length > 0 ? topWeak.join(' and ') + ' score consistently low across personas. Messaging needs strengthening in these areas.' : 'No major consistent weaknesses identified.'}</div>
+      </div>
+      <div class="synthesis-section" style="margin-bottom:0">
+        <div class="synthesis-label">→ PMM RECOMMENDATION</div>
+        <div class="synthesis-text">${avgScore >= 70 ? 'Proposition is ready to test with target segment. Consider A/B testing messaging variants to improve weak dimensions.' : avgScore >= 55 ? 'Proposition needs refinement before broader rollout. Focus on the dimensions scoring below 65.' : 'Proposition requires significant rework. Core messaging is not resonating with selected personas.'}</div>
+      </div>
+    </div>
+  `;
+
+  results.innerHTML = html;
+}
+
+function copyReport() {
+  const prop = document.getElementById('prop-text').value;
+  const reportText = `Sage Insight Lab — Proposition Analysis\n\nProposition: ${prop}\n\nPersonas Evaluated: ${selectedPropositionPersonas.map(id => personas.find(p=>p.id===id)?.name).join(', ')}\n\n[Full analysis generated in Sage Insight Lab]`;
+  navigator.clipboard.writeText(reportText).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    if (btn) { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy Report', 2000); }
+  });
+}
+
+// ============================================================
+// INTELLIGENCE
+// ============================================================
+function renderNPSProducts() {
+  const products = [
+    { name:'Sage Accounting', nps:52 }, { name:'GoProposal', nps:71 },
+    { name:'Sage Payroll', nps:48 }, { name:'Sage for Accountants', nps:55 },
+    { name:'Sage HR', nps:44 }, { name:'Futrli', nps:62 },
+    { name:'AutoEntry', nps:58 }, { name:'Sage 50', nps:38 },
+    { name:'Sage Payments', nps:41 }, { name:'Sage Mobile', nps:32 },
+    { name:'Sage Active France', nps:49 }, { name:'Sage Inventory', nps:45 },
+    { name:'Sage GE', nps:43 }
+  ];
+
+  const container = document.getElementById('nps-products');
+  container.innerHTML = products.map(p => `
+    <div class="nps-product">
+      <div class="nps-product-name">${p.name}</div>
+      <div class="nps-bar-track"><div class="nps-bar-fill" style="width:${Math.max(5,(p.nps+100)/2}%"></div></div>
+      <div class="nps-product-score">+${p.nps}</div>
+    </div>
+  `).join('');
+}
+
+function renderChurnSignals() {
+  const signals = [
+    { rank:1, signal:'Bank feed reliability failures', quote:'"I had to reconcile manually for three days because the feed dropped."', tags:['Priya','Dave','Tom E'] },
+    { rank:2, signal:'Price increases without perceived value gain', quote:'"The cost went up again and I couldn\'t see what changed."', tags:['Sarah','Nia','Tom W'] },
+    { rank:3, signal:'Accountant recommends alternative platform', quote:'"My accountant uses Xero and said migration would be easy."', tags:['Priya','Tom E','Maya'] },
+    { rank:4, signal:'Mobile experience significantly behind competitors', quote:'"The mobile app is unusable on-site. My team won\'t use it."', tags:['Dave','Tom E'] },
+    { rank:5, signal:'Support wait times during critical periods', quote:'"Called support during MTD deadline. 40 minute wait. Unacceptable."', tags:['Priya','Tom W','Nia'] },
+    { rank:6, signal:'Missing integrations with key business tools', quote:'"It doesn\'t connect to our CRM or our project management tool."', tags:['Tom E','James','Maya'] }
+  ];
+
+  const container = document.getElementById('churn-signals');
+  container.innerHTML = signals.map(s => `
+    <div class="churn-item">
+      <div class="churn-rank">${s.rank}</div>
+      <div class="churn-content">
+        <div class="churn-signal">${s.signal}</div>
+        <div class="churn-quote">${s.quote}</div>
+        <div class="churn-tags">${s.tags.map(t=>`<span class="chip">${t}</span>`).join('')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+renderPersonas();
+renderConversationSidebar();
+renderPropositionPersonaSelector();
+renderNPSProducts();
+renderChurnSignals();
+</script>
+</body>
+</html>
