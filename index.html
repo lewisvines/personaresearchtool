@@ -328,7 +328,7 @@ h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--sage-t
 // ============================================================
 const personas = [
   {
-    id:'priya', name:'Priya Sharma', type:'business', role:'Founder, Priya's Patisserie (12 staff)',
+    id:'priya', name:'Priya Sharma', type:'business', role:'Founder, Priya\'s Patisserie (12 staff)',
     nps:4, risk:'HIGH', npsClass:'low',
     ocean:{O:72,C:58,E:80,A:65,N:74},
     oceanRationale:{
@@ -1225,7 +1225,7 @@ function renderNPSProducts() {
   container.innerHTML = products.map(p => `
     <div class="nps-product">
       <div class="nps-product-name">${p.name}</div>
-      <div class="nps-bar-track"><div class="nps-bar-fill" style="width:${Math.max(5,(p.nps+100)/2}%"></div></div>
+      <div class="nps-bar-track"><div class="nps-bar-fill" style="width:${Math.max(5,(p.nps+100)/2)}%"></div></div>
       <div class="nps-product-score">+${p.nps}</div>
     </div>
   `).join('');
